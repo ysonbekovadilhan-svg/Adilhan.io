@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Курсовая работа - Анализ данных Кыргызстана</title>
+    <script src="https://cdn.plot.ly/plotly-3.1.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a2f2a, #1a4a3a);
+            color: #eee;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .sub {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffd700;
+            font-size: 14px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+        .tab {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 10px 25px;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        .tab.active {
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        .tab:hover {
+            background: rgba(255,215,0,0.5);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            border-left: 4px solid #ffd700;
+        }
+        .stat-title {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .stat-detail {
+            font-size: 0.75em;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .chart-card {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        .chart-card h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+            font-size: 1.1em;
+        }
+        .insight-box {
+            background: rgba(0,0,0,0.5);
+            border-left: 4px solid #ffd700;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 13px;
+        }
+        th {
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+        }
+        @media (max-width: 768px) {
+            .chart-grid { grid-template-columns: 1fr; }
+            .stat-value { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🇰🇬 АНАЛИЗ ДАННЫХ КЫРГЫЗСТАНА</h1>
+    <div class="sub">Курсовая работа | Статистический анализ | Корреляция | Гистограммы</div>
+    
+    <div class="tabs">
+        <button class="tab active" data-data="economy">📊 Экономика КР</button>
+        <button class="tab" data-data="population">👥 Население КР</button>
+        <button class="tab" data-data="education">📚 Образование КР</button>
+        <button class="tab" data-data="regions">🗺️ Регионы КР</button>
+    </div>
+
+    <div id="main">
+        <!-- Статистики -->
+        <div class="stats-grid" id="statsGrid"></div>
+        
+        <div class="chart-grid">
+            <!-- Гистограммы -->
+            <div class="chart-card">
+                <h3>📊 Гистограммы распределений</h3>
+                <div id="histograms" style="height: 400px;"></div>
+            </div>
+            
+            <!-- Тепловая карта корреляций -->
+            <div class="chart-card">
+                <h3>🔥 Тепловая карта корреляций</h3>
+                <div id="heatmap" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- Таблица корреляций -->
+        <div class="chart-card">
+            <h3>📋 Корреляционная матрица</h3>
+            <div id="corrTable" style="overflow-x: auto;"></div>
+        </div>
+
+        <!-- Выводы -->
+        <div class="insight-box">
+            <strong>🧠 АНАЛИТИЧЕСКИЕ ВЫВОДЫ:</strong>
+            <div id="insights"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ДАННЫЕ ПО КЫРГЫЗСТАНУ
+    const datasets = {
+        economy: {
+            name: "Экономика КР",
+            data: [
+                { Год: 2015, ВВП_млрд_сом: 423.6, Инфляция: 3.4, Инвестиции_млн: 8500, Экспорт_млн: 1450, Импорт_млн: 4100 },
+                { Год: 2016, ВВП_млрд_сом: 446.2, Инфляция: 0.4, Инвестиции_млн: 8900, Экспорт_млн: 1520, Импорт_млн: 4280 },
+                { Год: 2017, ВВП_млрд_сом: 480.7, Инфляция: 3.2, Инвестиции_млн: 9400, Экспорт_млн: 1680, Импорт_млн: 4520 },
+                { Год: 2018, ВВП_млрд_сом: 513.5, Инфляция: 1.5, Инвестиции_млн: 10200, Экспорт_млн: 1750, Импорт_млн: 4890 },
+                { Год: 2019, ВВП_млрд_сом: 554.6, Инфляция: 3.1, Инвестиции_млн: 11100, Экспорт_млн: 1820, Импорт_млн: 5210 },
+                { Год: 2020, ВВП_млрд_сом: 598.3, Инфляция: 9.7, Инвестиции_млн: 9800, Экспорт_млн: 1580, Импорт_млн: 4870 },
+                { Год: 2021, ВВП_млрд_сом: 680.4, Инфляция: 11.2, Инвестиции_млн: 10500, Экспорт_млн: 1650, Импорт_млн: 5320 },
+                { Год: 2022, ВВП_млрд_сом: 870.0, Инфляция: 14.7, Инвестиции_млн: 12800, Экспорт_млн: 2100, Импорт_млн: 7800 },
+                { Год: 2023, ВВП_млрд_сом: 1020.0, Инфляция: 9.2, Инвестиции_млн: 14200, Экспорт_млн: 2450, Импорт_млн: 8900 }
+            ]
+        },
+        population: {
+            name: "Население КР",
+            data: [
+                { Год: 2015, Население_млн: 6.0, Рождаемость: 27.4, Смертность: 6.2, Миграция_тыс: -15, Городское_процент: 36.2 },
+                { Год: 2016, Население_млн: 6.1, Рождаемость: 27.1, Смертность: 6.1, Миграция_тыс: -12, Городское_процент: 36.4 },
+                { Год: 2017, Население_млн: 6.2, Рождаемость: 26.8, Смертность: 6.0, Миграция_тыс: -10, Городское_процент: 36.6 },
+                { Год: 2018, Население_млн: 6.3, Рождаемость: 26.5, Смертность: 5.9, Миграция_тыс: -8, Городское_процент: 36.9 },
+                { Год: 2019, Население_млн: 6.4, Рождаемость: 26.2, Смертность: 5.8, Миграция_тыс: -7, Городское_процент: 37.1 },
+                { Год: 2020, Население_млн: 6.5, Рождаемость: 25.9, Смертность: 7.1, Миграция_тыс: -20, Городское_процент: 37.4 },
+                { Год: 2021, Население_млн: 6.6, Рождаемость: 25.5, Смертность: 6.5, Миграция_тыс: -18, Городское_процент: 37.6 },
+                { Год: 2022, Население_млн: 6.8, Рождаемость: 25.0, Смертность: 6.0, Миграция_тыс: -15, Городское_процент: 37.9 },
+                { Год: 2023, Население_млн: 7.0, Рождаемость: 24.5, Смертность: 5.8, Миграция_тыс: -12, Городское_процент: 38.2 }
+            ]
+        },
+        education: {
+            name: "Образование КР",
+            data: [
+                { Год: 2015, Школы: 2200, Ученики_тыс: 1100, Учителя_тыс: 68, Бюджет_млн_сом: 8500, Охват_процент: 96.5 },
+                { Год: 2016, Школы: 2220, Ученики_тыс: 1120, Учителя_тыс: 69, Бюджет_млн_сом: 8900, Охват_процент: 96.7 },
+                { Год: 2017, Школы: 2240, Ученики_тыс: 1140, Учителя_тыс: 70, Бюджет_млн_сом: 9400, Охват_процент: 96.9 },
+                { Год: 2018, Школы: 2260, Ученики_тыс: 1160, Учителя_тыс: 71, Бюджет_млн_сом: 10200, Охват_процент: 97.1 },
+                { Год: 2019, Школы: 2280, Ученики_тыс: 1180, Учителя_тыс: 72, Бюджет_млн_сом: 11100, Охват_процент: 97.3 },
+                { Год: 2020, Школы: 2300, Ученики_тыс: 1200, Учителя_тыс: 73, Бюджет_млн_сом: 11800, Охват_процент: 97.0 },
+                { Год: 2021, Школы: 2320, Ученики_тыс: 1220, Учителя_тыс: 74, Бюджет_млн_сом: 12500, Охват_процент: 97.2 },
+                { Год: 2022, Школы: 2340, Ученики_тыс: 1240, Учителя_тыс: 75, Бюджет_млн_сом: 13500, Охват_процент: 97.4 },
+                { Год: 2023, Школы: 2360, Ученики_тыс: 1260, Учителя_тыс: 76, Бюджет_млн_сом: 14800, Охват_процент: 97.6 }
+            ]
+        },
+        regions: {
+            name: "Регионы КР",
+            data: [
+                { Регион: "Чуйская", Население_тыс: 938, ВРП_млрд_сом: 185.5, Уровень_бедности: 18.5, Занятость_процент: 68.5, Зарплата_сом: 18500 },
+                { Регион: "Ошская", Население_тыс: 1410, ВРП_млрд_сом: 82.3, Уровень_бедности: 32.4, Занятость_процент: 62.1, Зарплата_сом: 12800 },
+                { Регион: "Джалал-Абадская", Население_тыс: 1220, ВРП_млрд_сом: 68.7, Уровень_бедности: 35.2, Занятость_процент: 60.8, Зарплата_сом: 11900 },
+                { Регион: "Иссык-Кульская", Население_тыс: 502, ВРП_млрд_сом: 41.2, Уровень_бедности: 24.1, Занятость_процент: 64.3, Зарплата_сом: 15200 },
+                { Регион: "Нарынская", Население_тыс: 292, ВРП_млрд_сом: 18.5, Уровень_бедности: 41.2, Занятость_процент: 58.2, Зарплата_сом: 11200 },
+                { Регион: "Таласская", Население_тыс: 271, ВРП_млрд_сом: 15.8, Уровень_бедности: 28.5, Занятость_процент: 65.1, Зарплата_сом: 13500 },
+                { Регион: "Баткенская", Население_тыс: 548, ВРП_млрд_сом: 22.1, Уровень_бедности: 38.7, Занятость_процент: 59.5, Зарплата_сом: 10800 },
+                { Регион: "г.Бишкек", Население_тыс: 1070, ВРП_млрд_сом: 310.0, Уровень_бедности: 8.2, Занятость_процент: 75.2, Зарплата_сом: 28500 }
+            ]
+        }
+    };
+
+    let currentData = [];
+    let currentColumns = [];
+
+    function loadDataset(type) {
+        currentData = datasets[type].data;
+        currentColumns = Object.keys(currentData[0]).filter(key => typeof currentData[0][key] === 'number');
+        processAnalysis();
+    }
+
+    function processAnalysis() {
+        const numericData = {};
+        currentColumns.forEach(col => {
+            numericData[col] = currentData.map(row => parseFloat(row[col])).filter(v => !isNaN(v));
+        });
+
+        // СТАТИСТИКИ
+        const stats = {};
+        currentColumns.forEach(col => {
+            const vals = numericData[col];
+            stats[col] = {
+                среднее: ss.mean(vals),
+                медиана: ss.median(vals),
+                отклонение: ss.standardDeviation(vals),
+                минимум: Math.min(...vals),
+                максимум: Math.max(...vals),
+                асимметрия: ss.sampleSkewness(vals)
+            };
+        });
+
+        // Отрисовка статистик
+        const statsGrid = document.getElementById('statsGrid');
+        statsGrid.innerHTML = '';
+        currentColumns.slice(0, 6).forEach(col => {
+            const s = stats[col];
+            statsGrid.innerHTML += `
+                <div class="stat-card">
+                    <div class="stat-title">📊 ${col}</div>
+                    <div class="stat-value">${s.среднее.toFixed(1)}</div>
+                    <div class="stat-detail">Медиана: ${s.медиана.toFixed(1)}</div>
+                    <div class="stat-detail">Отклонение: ${s.отклонение.toFixed(1)}</div>
+                    <div class="stat-detail">Мин: ${s.минимум.toFixed(1)} | Макс: ${s.максимум.toFixed(1)}</div>
+                    <div class="stat-detail">Асимметрия: ${s.асимметрия.toFixed(3)}</div>
+                </div>
+            `;
+        });
+
+        // КОРРЕЛЯЦИЯ
+        const corrMatrix = {};
+        currentColumns.forEach(col1 => {
+            corrMatrix[col1] = {};
+            currentColumns.forEach(col2 => {
+                const pairs = [];
+                for (let i = 0; i < currentData.length; i++) {
+                    const v1 = parseFloat(currentData[i][col1]);
+                    const v2 = parseFloat(currentData[i][col2]);
+                    if (!isNaN(v1) && !isNaN(v2)) pairs.push([v1, v2]);
+                }
+                const corr = ss.sampleCorrelation(pairs.map(p => p[0]), pairs.map(p => p[1]));
+                corrMatrix[col1][col2] = isNaN(corr) ? 0 : corr;
+            });
+        });
+
+        // ГИСТОГРАММЫ
+        const histColors = ['#ffd700', '#ff8c00', '#ff6347', '#4CAF50', '#2196F3', '#9C27B0'];
+        const histTraces = currentColumns.slice(0, 5).map((col, idx) => ({
+            x: numericData[col],
+            type: 'histogram',
+            name: col,
+            opacity: 0.65,
+            nbinsx: 20,
+            marker: { color: histColors[idx % histColors.length], line: { color: 'white', width: 1 } }
+        }));
+        
+        Plotly.newPlot('histograms', histTraces, { 
+            barmode: 'overlay',
+            title: '',
+            height: 400,
+            xaxis: { title: 'Значения', color: '#ddd' },
+            yaxis: { title: 'Частота', color: '#ddd' },
+            plot_bgcolor: 'rgba(0,0,0,0.3)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            legend: { font: { color: '#ffd700' } }
+        });
+
+        // Тепловая карта
+        const zVals = currentColumns.map(col1 => currentColumns.map(col2 => corrMatrix[col1][col2]));
+        Plotly.newPlot('heatmap', [{
+            z: zVals, x: currentColumns, y: currentColumns, type: 'heatmap',
+            colorscale: 'RdYlGn', zmid: 0,
+            text: zVals.map(row => row.map(v => v.toFixed(2))),
+            texttemplate: '%{text}', textfont: { size: 10, color: 'white' }
+        }], { 
+            height: 400, 
+            margin: { t: 30, l: 120, b: 100 },
+            plot_bgcolor: 'rgba(0,0,0,0.3)',
+            paper_bgcolor: 'rgba(0,0,0,0)'
+        });
+
+        // ТАБЛИЦА КОРРЕЛЯЦИЙ
+        let tableHtml = '<thead><tr><th></th>';
+        currentColumns.forEach(col => tableHtml += `<th>${col}</th>`);
+        tableHtml += '</tr></thead><tbody>';
+        currentColumns.forEach(col1 => {
+            tableHtml += `<tr><td><b>${col1}</b></td>`;
+            currentColumns.forEach(col2 => {
+                const val = corrMatrix[col1][col2];
+                let color = Math.abs(val) > 0.6 ? (val > 0 ? '#4CAF50' : '#f44336') : '#FFC107';
+                tableHtml += `<td style="color:${color};">${val.toFixed(3)}</td>`;
+            });
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody>';
+        document.getElementById('corrTable').innerHTML = `<table style="width:100%">${tableHtml}</table>`;
+
+        // ВЫВОДЫ
+        const insights = [];
+        const strongCorrs = [];
+        for (let i = 0; i < currentColumns.length; i++) {
+            for (let j = i+1; j < currentColumns.length; j++) {
+                const corr = corrMatrix[currentColumns[i]][currentColumns[j]];
+                if (Math.abs(corr) > 0.6) {
+                    strongCorrs.push(`${currentColumns[i]} ↔ ${currentColumns[j]} (${corr.toFixed(2)})`);
+                }
+            }
+        }
+        
+        if (strongCorrs.length) {
+            insights.push(`🔗 <strong>Сильные корреляции:</strong> ${strongCorrs.join(', ')}`);
+        } else {
+            insights.push(`📉 <strong>Сильных корреляций не обнаружено</strong> (|r| ≤ 0.6)`);
+        }
+        
+        const skewCols = currentColumns.filter(col => Math.abs(stats[col].асимметрия) > 0.8);
+        if (skewCols.length) {
+            insights.push(`⚠️ <strong>Асимметрия >0.8:</strong> ${skewCols.join(', ')} — распределение смещено`);
+        } else {
+            insights.push(`✅ <strong>Асимметрия в норме:</strong> все переменные имеют симметричное распределение`);
+        }
+        
+        insights.push(`📊 <strong>Объём выборки:</strong> ${currentData.length} наблюдений, ${currentColumns.length} переменных`);
+        insights.push(`📈 <strong>Рекомендация:</strong> данные готовы для дальнейшего анализа и прогнозирования`);
+        
+        document.getElementById('insights').innerHTML = `<ul style="margin-left: 20px; margin-top: 10px;">${insights.map(i => `<li style="margin-bottom: 8px;">${i}</li>`).join('')}</ul>`;
+    }
+
+    // Обработка вкладок
+    document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            loadDataset(this.getAttribute('data-data'));
+        });
+    });
+
+    // Запуск
+    loadDataset('economy');
+</script>
+</body>
+</html>
